@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dutchsec/asn1-scheme-parser"
+	"github.com/dutchsec/asn1/parser"
 )
 
 func Example() {

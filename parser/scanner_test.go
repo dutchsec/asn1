@@ -3,8 +3,6 @@ package asn1parser_test
 import (
 	"strings"
 	"testing"
-
-	"github.com/dutchsec/asn1-scheme-parser"
 )
 
 // Ensure the scanner can scan tokens correctly.

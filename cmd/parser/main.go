@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	asn1parser "github.com/dutchsec/asn1-scheme-parser"
+	asn1parser "github.com/dutchsec/asn1/parser"
 	"github.com/fatih/color"
 
 	cli "github.com/urfave/cli"
@@ -45,12 +45,12 @@ type cmd struct {
 }
 
 func VersionAction(c *cli.Context) {
-	fmt.Println(color.YellowString(fmt.Sprintf("asn1-scheme-parser")))
+	fmt.Println(color.YellowString(fmt.Sprintf("asn1 scheme parser")))
 }
 
 func New() *cmd {
 	app := cli.NewApp()
-	app.Name = "asn1-scheme-parser"
+	app.Name = "asn1 scheme parser"
 	app.Author = "DutchSec"
 	app.Usage = ""
 	app.Description = ``

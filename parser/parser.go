@@ -3,6 +3,9 @@ package asn1parser
 import (
 	"fmt"
 	"io"
+	"strconv"
+
+	asn1 "github.com/dutchsec/asn1"
 )
 
 // Parser represents a parser.
@@ -21,10 +24,15 @@ func NewParser(r io.Reader) *Parser {
 	return &Parser{s: NewScanner(r)}
 }
 
+var (
+	ASNTagNotSet = asn1.ASNTag{}
+)
+
 // Parse parses an ASN1 Definition.
 func (p *Parser) Parse() (*ASNDefinition, error) {
 	d := &ASNDefinition{
-		Types: []ASNType{},
+		Types:   []ASNType{},
+		Imports: map[string][]string{},
 	}
 
 	// name of definition
@@ -81,12 +89,14 @@ func (p *Parser) Parse() (*ASNDefinition, error) {
 		}
 
 		if tok, _ := p.scanIgnoreWhitespace(); tok == IMPORTS {
+			from := ""
+			imports := []string{}
+
 			for {
 				if tok, lit := p.scanIgnoreWhitespace(); tok != IDENT {
 					return nil, fmt.Errorf("imports: found %+v, expected IDENT: %+v", tok, lit)
 				} else {
-					// TODO: implement IMPORTS
-					_ = lit
+					imports = append(imports, lit)
 				}
 
 				if tok, _ = p.scanIgnoreWhitespace(); tok != COMMA {
@@ -102,7 +112,11 @@ func (p *Parser) Parse() (*ASNDefinition, error) {
 
 			if tok, lit := p.scanIgnoreWhitespace(); tok != IDENT {
 				return nil, fmt.Errorf("imports: found %+v, expected IDENT: %+v", tok, lit)
+			} else {
+				from = lit
 			}
+
+			d.Imports[from] = imports
 
 			if tok, _ := p.scanIgnoreWhitespace(); tok != GROUP_OPEN {
 				p.unscan()
@@ -143,14 +157,16 @@ func (p *Parser) Parse() (*ASNDefinition, error) {
 			p.unscan()
 		}
 
-		cmmn := ASNCommon{}
+		cmmn := ASNCommon{
+			tag: ASNTagNotSet,
+		}
 
 		if tok, lit := p.scanIgnoreWhitespace(); tok == END {
 			p.unscan()
 			break
 		} else if tok == IDENT {
 			// NAME
-			cmmn.SetName(lit)
+			cmmn.name = lit
 		} else {
 			return nil, fmt.Errorf("decl: found %+v, expected IDENT: %+v", tok, lit)
 		}
@@ -228,14 +244,24 @@ func (p *Parser) Parse() (*ASNDefinition, error) {
 				p.unscan()
 			} else {
 				// [UNIVERSAL 8]
+				class := asn1.ClassContextSpecific
+
 				if tok, lit := p.scanIgnoreWhitespace(); tok == APPLICATION {
+					class = asn1.ClassApplication
 				} else if tok == UNIVERSAL {
+					class = asn1.ClassUniversal
 				} else {
 					return nil, fmt.Errorf("found %q, expected IDENT", lit)
 				}
 
 				if tok, lit := p.scanIgnoreWhitespace(); tok != IDENT {
 					return nil, fmt.Errorf("found %q, expected IDENT", lit)
+				} else if val, err := strconv.Atoi(lit); err != nil {
+					return nil, err
+				} else {
+					value := asn1.ASNValue(val)
+
+					cmmn.tag = asn1.Tag(class, value)
 				}
 
 				if tok, lit := p.scanIgnoreWhitespace(); tok != OPTIONAL_TERM_CLOSE {

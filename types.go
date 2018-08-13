@@ -386,8 +386,6 @@ func (s *ObjectIdentifier) UnmarshalRawValue(rv *RawValue) error {
 		strings.Join(svals, "."),
 	}
 
-	fmt.Printf("ObjectIdentifier %s %x\n", *s, rv.Content)
-
 	return nil
 }
 
